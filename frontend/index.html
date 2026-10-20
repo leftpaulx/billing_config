@@ -1,0 +1,1264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Billing Configuration</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f5bd3'/%3E%3Ctext x='16' y='21' font-family='sans-serif' font-size='13' font-weight='700' fill='white' text-anchor='middle'%3EOB%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #f1f3f6;
+    --border: #dfe3e8;
+    --border-strong: #c5ccd5;
+    --text: #18202a;
+    --muted: #5d6876;
+    --faint: #8a94a1;
+    --accent: #2f5bd3;
+    --accent-weak: #e8eefc;
+    --accent-text: #ffffff;
+    --ok: #18794e;
+    --ok-weak: #e3f4ea;
+    --warn: #9a5b00;
+    --warn-weak: #fdf1dc;
+    --err: #c0322b;
+    --err-weak: #fde8e6;
+    --info: #2f5bd3;
+    --info-weak: #e8eefc;
+    --draft: #7a5a00;
+    --draft-weak: #fbf3d9;
+    --retired: #5d6876;
+    --retired-weak: #eceef1;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
+    --shadow-lg: 0 12px 32px rgba(16, 24, 40, .18);
+    --radius: 8px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1318;
+      --surface: #171c23;
+      --surface-2: #1e252e;
+      --border: #2a323d;
+      --border-strong: #3a4450;
+      --text: #e6eaef;
+      --muted: #a3adb9;
+      --faint: #76808c;
+      --accent: #6b8fff;
+      --accent-weak: #1f2a47;
+      --accent-text: #0f1318;
+      --ok: #4cc38a;
+      --ok-weak: #15301f;
+      --warn: #f0b04a;
+      --warn-weak: #362a12;
+      --err: #ff7b72;
+      --err-weak: #3a1b1a;
+      --info: #6b8fff;
+      --info-weak: #1f2a47;
+      --draft: #e9c25b;
+      --draft-weak: #33290f;
+      --retired: #a3adb9;
+      --retired-weak: #242b34;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, .5);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: var(--mono); font-size: 12.5px; }
+  h1, h2, h3 { margin: 0; font-weight: 600; }
+  h1 { font-size: 20px; }
+  h2 { font-size: 15px; }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    padding: 10px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+  .brand .logo {
+    width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-text); font-size: 12px; font-weight: 700;
+  }
+  .env { font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: var(--warn-weak); color: var(--warn); }
+  .who { display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .who label { flex-wrap: nowrap; }
+  .who input { width: 220px; }
+  .who .hint { font-size: 11px; color: var(--faint); }
+
+  main { max-width: 1400px; margin: 0 auto; padding: 20px 24px 120px; }
+
+  /* ---------- controls ---------- */
+  input, select, textarea, button { font: inherit; color: inherit; }
+  input[type=text], input[type=search], input[type=number], input[type=datetime-local], input[type=date], select, textarea {
+    background: var(--surface); border: 1px solid var(--border-strong); border-radius: 6px;
+    padding: 6px 9px; min-height: 32px; width: 100%;
+  }
+  textarea { min-height: 64px; resize: vertical; }
+  input:focus, select:focus, textarea:focus, .ms:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+  input:disabled, select:disabled, textarea:disabled { background: var(--surface-2); color: var(--muted); }
+  label.field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 500; color: var(--muted); }
+  label.field > span.req::after { content: " *"; color: var(--err); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+    padding: 6px 12px; min-height: 32px; border-radius: 6px; cursor: pointer; white-space: nowrap;
+    border: 1px solid var(--border-strong); background: var(--surface); font-weight: 500;
+  }
+  .btn:hover:not(:disabled) { background: var(--surface-2); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .btn.primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--accent); }
+  .btn.danger { color: var(--err); }
+  .btn.ghost { border-color: transparent; background: transparent; }
+  .btn.sm { padding: 3px 8px; min-height: 26px; font-size: 12px; }
+  .seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 6px; overflow: hidden; }
+  .seg button { border: 0; background: var(--surface); padding: 5px 12px; cursor: pointer; font-size: 13px; }
+  .seg button + button { border-left: 1px solid var(--border-strong); }
+  .seg button.on { background: var(--accent); color: var(--accent-text); }
+  .seg button:disabled { cursor: not-allowed; }
+  .seg button:disabled:not(.on) { color: var(--faint); }
+  .switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+  .switch input { appearance: none; width: 36px; height: 20px; border-radius: 999px; background: var(--border-strong); position: relative; cursor: pointer; margin: 0; transition: background .15s; }
+  .switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
+  .switch input:checked { background: var(--accent); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .switch input:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ---------- cards / layout ---------- */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .card > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .card > .body { padding: 16px; }
+  .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  .page-head p { margin: 4px 0 0; color: var(--muted); }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  .muted { color: var(--muted); }
+  .faint { color: var(--faint); }
+  .small { font-size: 12px; }
+
+  /* ---------- badges ---------- */
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .badge.DRAFT { background: var(--draft-weak); color: var(--draft); }
+  .badge.PUBLISHED { background: var(--ok-weak); color: var(--ok); }
+  .badge.RETIRED { background: var(--retired-weak); color: var(--retired); }
+  .badge.DELETED { background: var(--err-weak); color: var(--err); }
+  .badge.neutral { background: var(--surface-2); color: var(--muted); }
+  .badge.waived { background: var(--info-weak); color: var(--info); }
+  .badge.warn { background: var(--warn-weak); color: var(--warn); }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+  .tag.warn { background: var(--warn-weak); color: var(--warn); border-color: transparent; }
+
+  /* ---------- filters ---------- */
+  .filters { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1.6fr auto; gap: 10px 12px; align-items: end; padding: 14px 16px; }
+  .filters .applies { display: flex; gap: 6px; }
+  .filters .applies select { flex: 1; min-width: 0; }
+  .status-chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 16px 14px; align-items: center; }
+  .chip-toggle { border: 1px solid var(--border-strong); background: var(--surface); padding: 3px 10px; border-radius: 999px; cursor: pointer; font-size: 12px; }
+  .chip-toggle.on { background: var(--accent-weak); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+
+  /* ---------- table ---------- */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--surface-2); position: sticky; top: 0; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .sub { font-size: 12px; color: var(--muted); }
+  td.nowrap, td .nowrap { white-space: nowrap; }
+  .conds { display: flex; flex-wrap: wrap; gap: 4px; max-width: 360px; }
+  .cond { font-size: 12px; padding: 1px 7px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); white-space: nowrap; }
+  .cond b { font-weight: 600; color: var(--muted); margin-right: 3px; }
+  .empty { padding: 48px 16px; text-align: center; color: var(--muted); }
+  .actions { display: flex; gap: 4px; justify-content: flex-end; }
+
+  /* ---------- editor ---------- */
+  .editor { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+  .editor .side { position: sticky; top: 72px; display: flex; flex-direction: column; gap: 16px; }
+  .editor-form { display: flex; flex-direction: column; gap: 16px; }
+  .section-letter { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-weak); color: var(--accent); font-size: 12px; font-weight: 700; margin-right: 8px; }
+  .dim-row { display: grid; grid-template-columns: 180px auto minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px 0; border-bottom: 1px dashed var(--border); }
+  .dim-row:last-child { border-bottom: 0; }
+  .policy-note { margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: var(--surface-2); font-size: 12.5px; color: var(--muted); }
+  .dim-row .dim-name { font-weight: 600; padding-top: 5px; }
+  .dim-row .dim-name .small { font-weight: 400; display: block; }
+  .dim-row .all-note { color: var(--faint); padding-top: 6px; font-style: italic; }
+  .has-error { box-shadow: 0 0 0 2px var(--err-weak); border-radius: 6px; }
+  .has-error input, .has-error select, .has-error .ms, .has-error .seg { border-color: var(--err) !important; }
+  .dim-row.has-error, .dim-row.has-warning { padding-left: 8px; padding-right: 8px; margin: 0 -8px; }
+  .dim-row.has-warning { box-shadow: 0 0 0 2px var(--warn-weak); border-radius: 6px; }
+  .summary { font-size: 14.5px; line-height: 1.55; }
+  .summary strong { font-weight: 600; }
+  .head-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px; color: var(--muted); font-size: 12.5px; }
+  .dirty-dot { color: var(--warn); font-weight: 600; font-size: 12px; }
+  .readonly-banner.deleted { background: var(--err-weak); color: var(--err); }
+  .readonly-banner { padding: 10px 14px; border-radius: var(--radius); background: var(--info-weak); color: var(--info); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  /* ---------- issues ---------- */
+  .issues { display: flex; flex-direction: column; gap: 8px; }
+  .issue { display: grid; grid-template-columns: 18px 1fr; gap: 8px; padding: 8px 10px; border-radius: 6px; font-size: 13px; border-left: 3px solid; }
+  .issue.error { background: var(--err-weak); border-color: var(--err); }
+  .issue.warning { background: var(--warn-weak); border-color: var(--warn); }
+  .issue.info { background: var(--info-weak); border-color: var(--info); }
+  .issue .ico { font-weight: 700; }
+  .issue.error .ico { color: var(--err); }
+  .issue.warning .ico { color: var(--warn); }
+  .issue.info .ico { color: var(--info); }
+  .issue code { font-size: 11px; opacity: .75; }
+  .issue-head { display: flex; gap: 8px; font-size: 12px; font-weight: 600; margin-bottom: 4px; flex-wrap: wrap; }
+  .issue-head .e { color: var(--err); } .issue-head .w { color: var(--warn); } .issue-head .i { color: var(--info); }
+
+  /* ---------- revisions / history ---------- */
+  .revs { display: flex; flex-direction: column; }
+  .rev { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .rev:last-child { border-bottom: 0; }
+  .rev.current { font-weight: 600; }
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .event { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .event:last-child { border-bottom: 0; }
+  .event .when { font-size: 12px; color: var(--muted); }
+  .action { font-size: 11px; font-weight: 700; letter-spacing: .03em; padding: 2px 7px; border-radius: 4px; background: var(--surface-2); }
+  .action.PUBLISHED { background: var(--ok-weak); color: var(--ok); }
+  .action.REJECTED { background: var(--err-weak); color: var(--err); }
+  .action.RETIRED, .action.SUPERSEDED { background: var(--retired-weak); color: var(--retired); }
+  .action.DELETED { background: var(--err-weak); color: var(--err); }
+  .action.CREATED, .action.UPDATED { background: var(--info-weak); color: var(--info); }
+  .diff { margin-top: 6px; font-size: 12.5px; display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; }
+  .diff .k { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+  .diff del { color: var(--err); text-decoration: line-through; }
+  .diff ins { color: var(--ok); text-decoration: none; }
+
+  /* ---------- multi-select ---------- */
+  .ms { position: relative; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 32px; padding: 3px 6px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); cursor: text; }
+  .ms.disabled { background: var(--surface-2); cursor: default; }
+  .ms .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border-radius: 4px; background: var(--accent-weak); color: var(--accent); font-size: 12.5px; font-weight: 500; }
+  .ms.disabled .pill { padding-right: 8px; background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .ms .pill .code { font-family: var(--mono); font-size: 11px; opacity: .8; }
+  .ms .pill button { border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0 3px; font-size: 14px; line-height: 1; border-radius: 3px; }
+  .ms .pill button:hover { background: rgba(0, 0, 0, .08); }
+  .ms input { border: 0 !important; outline: none !important; min-height: 24px !important; padding: 2px 4px !important; flex: 1; min-width: 120px; width: auto !important; background: transparent !important; }
+  .ms .ms-pills { display: contents; }
+  .ms .single-value { padding: 2px 4px; }
+  .ms input.has-value::placeholder { color: var(--text); opacity: 1; }
+  .ms input.has-value:focus::placeholder { color: var(--faint); }
+  .ms-menu { position: absolute; z-index: 30; left: -1px; right: -1px; top: calc(100% + 4px); max-height: 260px; overflow: auto; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 6px; box-shadow: var(--shadow-lg); padding: 4px; }
+  .ms-opt { display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .ms-opt .code { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+  .ms-opt.active { background: var(--accent-weak); }
+  .ms-opt.none { color: var(--faint); cursor: default; }
+  .ms-actions { display: flex; gap: 6px; margin-top: 6px; }
+
+  /* ---------- modal / toast ---------- */
+  .backdrop { position: fixed; inset: 0; background: rgba(10, 14, 20, .45); z-index: 50; display: grid; place-items: center; padding: 16px; }
+  .modal { width: min(560px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--surface); border-radius: 10px; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
+  .modal.wide { width: min(820px, 100%); }
+  .modal > header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); }
+  .modal > .body { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .modal > footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border); }
+  #toasts { position: fixed; bottom: 20px; right: 20px; z-index: 60; display: flex; flex-direction: column; gap: 8px; }
+  .toast { background: var(--text); color: var(--bg); padding: 10px 14px; border-radius: 8px; box-shadow: var(--shadow-lg); max-width: 420px; font-size: 13px; }
+  .toast.err { background: var(--err); color: #fff; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 1100px) {
+    .editor { grid-template-columns: 1fr; }
+    .editor .side { position: static; }
+    .filters { grid-template-columns: 1fr 1fr 1fr; }
+  }
+  @media (max-width: 680px) {
+    main { padding: 16px 16px 120px; }
+    .topbar { padding: 10px 16px; }
+    .who input { width: 160px; }
+    .filters { grid-template-columns: 1fr; }
+    .grid2 { grid-template-columns: 1fr; }
+    .dim-row { grid-template-columns: 1fr; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo">OB</span> Billing Configuration <span class="env">POC</span></div>
+  <div class="who">
+    <label class="row" style="gap:6px">User <input id="who-user" type="text" autocomplete="off"></label>
+    <label class="row" style="gap:6px">Role
+      <select id="who-role" style="width:auto">
+        <option>VIEWER</option><option>EDITOR</option><option>PUBLISHER</option><option>ADMIN</option>
+      </select>
+    </label>
+    <span class="hint" title="POC only: identity is sent as X-User / X-Role headers. Production uses SSO.">dev auth</span>
+  </div>
+</header>
+<main id="app"></main>
+<div id="modal-root"></div>
+<div id="toasts"></div>
+
+<script>
+'use strict';
+
+// ============================================================================
+// Session (POC dev auth) + API client
+// ============================================================================
+const ROLES = ['VIEWER', 'EDITOR', 'PUBLISHER', 'ADMIN'];
+const store = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } },
+};
+const session = {
+  user: store.get('bc.user', 'demo.user@openborder.com'),
+  role: store.get('bc.role', 'PUBLISHER'),
+};
+const can = role => ROLES.indexOf(session.role) >= ROLES.indexOf(role);
+
+async function api(method, path, body) {
+  const res = await fetch(path, {
+    method,
+    headers: { 'Content-Type': 'application/json', 'X-User': session.user, 'X-Role': session.role },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (res.status === 204) return null;
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const detail = Array.isArray(data?.detail) ? data.detail.map(d => `${d.loc?.slice(1).join('.')}: ${d.msg}`).join('; ') : null;
+    const err = new Error(data?.error?.message || detail || res.statusText);
+    err.status = res.status;
+    err.code = data?.error?.code;
+    err.issues = data?.error?.issues || [];
+    throw err;
+  }
+  return data;
+}
+
+// ============================================================================
+// Reference data cache
+// ============================================================================
+const ref = { merchants: [], feeTypes: [], partners: [], dimensions: [], values: {} };
+const SHORT_DIM = { DESTINATION_COUNTRY: 'Dest', ORIGIN_COUNTRY: 'Origin', CARRIER: 'Carrier', FC_CODE: 'FC', SERVICE_LEVEL: 'Service' };
+
+async function loadRef() {
+  const [merchants, feeTypes, partners, dimensions] = await Promise.all([
+    api('GET', '/billing/reference/merchants'),
+    api('GET', '/billing/reference/fee-types'),
+    api('GET', '/billing/reference/partners'),
+    api('GET', '/billing/dimensions'),
+  ]);
+  Object.assign(ref, { merchants, feeTypes, partners, dimensions });
+  const lists = await Promise.all(dimensions.map(d => api('GET', `/billing/dimensions/${d.dimension_key}/values`)));
+  dimensions.forEach((d, i) => { ref.values[d.dimension_key] = lists[i]; });
+}
+
+const lookup = {
+  merchant: id => ref.merchants.find(m => m.merchant_id === id)?.display_name || id,
+  fee: id => ref.feeTypes.find(f => f.fee_type === id)?.display_name || id,
+  partner: id => ref.partners.find(p => p.partner_id === id)?.display_name || id,
+  dim: key => ref.dimensions.find(d => d.dimension_key === key),
+  dimName: key => lookup.dim(key)?.display_name || key,
+  value: (dim, v) => (ref.values[dim] || []).find(x => x.value === v)?.display_name || v,
+};
+
+// ============================================================================
+// Helpers
+// ============================================================================
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const shortId = id => String(id || '').slice(0, 8);
+
+function fmtDate(iso, { time = 'auto', utc = false } = {}) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const date = d.toISOString().slice(0, 10);
+  const hm = d.toISOString().slice(11, 16);
+  const showTime = time === true || (time === 'auto' && hm !== '00:00');
+  return date + (showTime ? ` ${hm}` : '') + (utc ? ' UTC' : '');
+}
+const toInput = iso => (iso ? new Date(iso).toISOString().slice(0, 16) : '');
+const fromInput = v => (v ? `${v}:00Z` : null);
+function nextMidnightUtc() {
+  const d = new Date();
+  d.setUTCHours(24, 0, 0, 0);
+  return d.toISOString();
+}
+function windowState(r) {
+  if (r.status === 'DRAFT' || r.status === 'DELETED') return null;
+  const now = Date.now();
+  const from = r.effective_from ? Date.parse(r.effective_from) : null;
+  const to = r.effective_to ? Date.parse(r.effective_to) : null;
+  if (to !== null && from !== null && to <= from) return { label: 'Never effective', cls: 'neutral' };
+  if (to !== null && to <= now) return { label: 'Ended', cls: 'neutral' };
+  if (from !== null && from > now) return { label: 'Scheduled', cls: 'warn' };
+  return { label: 'In effect', cls: 'PUBLISHED' };
+}
+function joinOr(items) {
+  if (items.length <= 1) return items.join('');
+  return `${items.slice(0, -1).join(', ')} or ${items[items.length - 1]}`;
+}
+function toast(msg, isErr = false) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (isErr ? ' err' : '');
+  el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), isErr ? 7000 : 3500);
+}
+function debounce(fn, ms) {
+  let t;
+  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
+
+function modal({ title, body, footer = '', wide = false, onMount }) {
+  const root = $('#modal-root');
+  root.innerHTML = `
+    <div class="backdrop">
+      <div class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <header><h2>${esc(title)}</h2><button class="btn ghost sm" data-close aria-label="Close">✕</button></header>
+        <div class="body">${body}</div>
+        ${footer ? `<footer>${footer}</footer>` : ''}
+      </div>
+    </div>`;
+  const close = () => { root.innerHTML = ''; document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  $$('[data-close]', root).forEach(b => b.addEventListener('click', close));
+  $('.backdrop', root).addEventListener('mousedown', e => { if (e.target.classList.contains('backdrop')) close(); });
+  onMount?.($('.modal', root), close);
+  return close;
+}
+
+function confirmDialog({ title, message, confirmLabel = 'Confirm', danger = false }) {
+  return new Promise(resolve => {
+    let decided = false;
+    modal({
+      title,
+      body: message,
+      footer: `<button class="btn" data-close>Cancel</button>
+               <button class="btn ${danger ? 'danger' : 'primary'}" data-ok>${esc(confirmLabel)}</button>`,
+      onMount(el, close) {
+        $('[data-ok]', el).addEventListener('click', () => { decided = true; close(); resolve(true); });
+        $$('[data-close]', el).forEach(b => b.addEventListener('click', () => { if (!decided) resolve(false); }));
+      },
+    });
+  });
+}
+
+// ============================================================================
+// Searchable select / multi-select component
+// ============================================================================
+function createSelect({ options, selected = [], multi = true, disabled = false, placeholder = 'Search…', onChange }) {
+  let value = [...selected];
+  let open = false;
+  let active = 0;
+  const el = document.createElement('div');
+  el.className = 'ms' + (disabled ? ' disabled' : '');
+  el.innerHTML = `<span class="ms-pills"></span>${disabled ? '' : '<input type="text" autocomplete="off">'}<div class="ms-menu" hidden></div>`;
+  const pills = $('.ms-pills', el);
+  const input = $('input', el);
+  const menu = $('.ms-menu', el);
+
+  const optLabel = v => options.find(o => o.value === v)?.label ?? v;
+  const filtered = () => {
+    const s = (input?.value || '').trim().toLowerCase();
+    return options.filter(o => (multi ? !value.includes(o.value) : true) && !o.hidden &&
+      (!s || o.value.toLowerCase().includes(s) || o.label.toLowerCase().includes(s)));
+  };
+
+  function renderValue() {
+    if (multi) {
+      pills.innerHTML = value.map(v => `<span class="pill" title="${esc(v)}">${esc(optLabel(v))}${optLabel(v) !== v ? ` <span class="code">${esc(v)}</span>` : ''}${disabled ? '' : `<button type="button" data-rm="${esc(v)}" aria-label="Remove ${esc(optLabel(v))}">×</button>`}</span>`).join('')
+        || (disabled ? '<span class="faint single-value">—</span>' : '');
+      if (input) input.placeholder = value.length ? 'Add…' : placeholder;
+    } else {
+      const label = value[0] ? optLabel(value[0]) : '';
+      if (disabled) pills.innerHTML = `<span class="single-value">${esc(label) || '<span class="faint">—</span>'}</span>`;
+      else { input.placeholder = label || placeholder; input.classList.toggle('has-value', !!label); }
+    }
+  }
+
+  function renderMenu() {
+    if (!open) { menu.hidden = true; return; }
+    const opts = filtered();
+    active = Math.min(active, Math.max(opts.length - 1, 0));
+    menu.innerHTML = opts.length
+      ? opts.map((o, i) => `<div class="ms-opt ${i === active ? 'active' : ''}" data-v="${esc(o.value)}"><span>${esc(o.label)}</span>${o.label !== o.value ? `<span class="code">${esc(o.value)}</span>` : ''}</div>`).join('')
+      : '<div class="ms-opt none">No matches</div>';
+    menu.hidden = false;
+    $('.ms-opt.active', menu)?.scrollIntoView({ block: 'nearest' });
+  }
+
+  function pick(v) {
+    value = multi ? [...value, v] : [v];
+    input.value = '';
+    if (!multi) { open = false; input.blur(); }
+    renderValue();
+    renderMenu();
+    onChange?.(multi ? [...value] : value[0]);
+  }
+
+  function removeValue(v) {
+    value = value.filter(x => x !== v);
+    renderValue();
+    renderMenu();
+    onChange?.([...value]);
+  }
+
+  if (!disabled) {
+    el.addEventListener('mousedown', e => {
+      const rm = e.target.closest('[data-rm]');
+      const opt = e.target.closest('.ms-opt[data-v]');
+      if (e.target !== input) e.preventDefault(); // keep focus in the input
+      if (rm) removeValue(rm.dataset.rm);
+      else if (opt) pick(opt.dataset.v);
+      else if (e.target !== input) input.focus();
+    });
+    input.addEventListener('focus', () => { open = true; active = 0; renderMenu(); });
+    input.addEventListener('blur', () => { open = false; input.value = ''; renderMenu(); });
+    input.addEventListener('input', () => { open = true; active = 0; renderMenu(); });
+    input.addEventListener('keydown', e => {
+      const opts = filtered();
+      if (e.key === 'ArrowDown') { e.preventDefault(); open = true; active = Math.min(active + 1, opts.length - 1); renderMenu(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); renderMenu(); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (open && opts[active]) pick(opts[active].value); }
+      else if (e.key === 'Escape') { e.stopPropagation(); open = false; renderMenu(); }
+      else if (e.key === 'Backspace' && multi && !input.value && value.length) removeValue(value[value.length - 1]);
+    });
+  }
+  renderValue();
+  return el;
+}
+
+// ============================================================================
+// Router
+// ============================================================================
+const app = $('#app');
+let leaveGuard = null; // returns true if navigation should be blocked
+
+window.addEventListener('hashchange', route);
+window.addEventListener('beforeunload', e => { if (leaveGuard?.()) { e.preventDefault(); e.returnValue = ''; } });
+
+async function route() {
+  const hash = location.hash || '#/rules';
+  const m = hash.match(/^#\/rules\/([0-9a-f-]{36}|new)$/);
+  leaveGuard = null;
+  try {
+    if (m) await renderEditor(m[1] === 'new' ? null : m[1]);
+    else await renderList();
+  } catch (err) {
+    app.innerHTML = `<div class="card"><div class="empty">Could not load page: ${esc(err.message)}<br><br><a href="#/rules">Back to rules</a></div></div>`;
+  }
+  window.scrollTo(0, 0);
+}
+
+function go(hash) {
+  if (leaveGuard?.() && !window.confirm('Discard unsaved changes?')) return;
+  leaveGuard = null;
+  if (location.hash === hash) route(); else location.hash = hash;
+}
+
+// ============================================================================
+// Rule list page (spec §8.1)
+// ============================================================================
+const listState = {
+  q: '', merchant_id: '', fee_type: '', statuses: new Set(['DRAFT', 'PUBLISHED', 'RETIRED']),
+  effective_on: '', dimension: '', value: '', include_ended: false,
+};
+
+function conditionChips(conditions) {
+  if (!conditions.length) return '<span class="cond"><b>All orders</b></span>';
+  return conditions.map(c => {
+    const names = c.values.map(v => lookup.value(c.dimension, v));
+    return `<span class="cond" title="${esc(lookup.dimName(c.dimension))}: ${esc(names.join(', '))}"><b>${esc(SHORT_DIM[c.dimension] || lookup.dimName(c.dimension))}</b>${esc(c.values.join('/'))}</span>`;
+  }).join('');
+}
+
+function payerText(r) {
+  if (!r.payer_type) return '<span class="faint">—</span>';
+  const t = r.payer_type[0] + r.payer_type.slice(1).toLowerCase();
+  if (r.payer_type === 'PARTNER' && r.payer_reference) return `${t}<div class="sub">${esc(lookup.partner(r.payer_reference))}</div>`;
+  if (r.payer_type === 'CARRIER' && r.payer_reference) return `${t}<div class="sub">${esc(lookup.value('CARRIER', r.payer_reference))}</div>`;
+  return t;
+}
+
+async function renderList() {
+  const s = listState;
+  const opt = (v, l, cur) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`;
+  app.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>Billing rules</h1>
+        <p>Who pays each OMS fee, and whether it is waived. Published rules sync to Snowflake as validated snapshots.</p>
+      </div>
+      ${can('EDITOR') ? '<button class="btn primary" id="new-rule">+ New rule</button>' : ''}
+    </div>
+    <div class="card">
+      <div class="filters">
+        <label class="field">Search<input type="search" id="f-q" placeholder="Rule ID, merchant, or reason" value="${esc(s.q)}"></label>
+        <label class="field">Merchant<select id="f-merchant"><option value="">All merchants</option>${ref.merchants.map(m => opt(m.merchant_id, `${m.merchant_id} · ${m.display_name}`, s.merchant_id)).join('')}</select></label>
+        <label class="field">Fee type<select id="f-fee"><option value="">All fees</option>${ref.feeTypes.map(f => opt(f.fee_type, f.display_name, s.fee_type)).join('')}</select></label>
+        <label class="field">Effective on<input type="date" id="f-eff" value="${esc(s.effective_on)}"></label>
+        <label class="field">Applies to
+          <div class="applies">
+            <select id="f-dim"><option value="">Any dimension</option>${ref.dimensions.map(d => opt(d.dimension_key, d.display_name, s.dimension)).join('')}</select>
+            <select id="f-val" ${s.dimension ? '' : 'disabled'}><option value="">Value…</option>${(ref.values[s.dimension] || []).map(v => opt(v.value, `${v.display_name} (${v.value})`, s.value)).join('')}</select>
+          </div>
+        </label>
+        <button class="btn" id="f-clear">Clear</button>
+      </div>
+      <div class="status-chips">
+        <span class="small muted">Status</span>
+        ${['DRAFT', 'PUBLISHED', 'RETIRED', 'DELETED'].map(st => `<button class="chip-toggle ${s.statuses.has(st) ? 'on' : ''}" data-status="${st}">${st[0] + st.slice(1).toLowerCase()}</button>`).join('')}
+        <label class="switch small" style="margin-left:12px"><input type="checkbox" id="f-ended" ${s.include_ended ? 'checked' : ''}> Show ended revisions</label>
+        <span class="small faint" id="count" style="margin-left:auto"></span>
+      </div>
+      <div class="table-wrap" id="rules-table"><div class="empty"><span class="spinner"></span></div></div>
+    </div>`;
+
+  const refresh = debounce(refreshList, 200);
+  $('#new-rule')?.addEventListener('click', () => go('#/rules/new'));
+  $('#f-q').addEventListener('input', e => { s.q = e.target.value; refresh(); });
+  $('#f-merchant').addEventListener('change', e => { s.merchant_id = e.target.value; refresh(); });
+  $('#f-fee').addEventListener('change', e => { s.fee_type = e.target.value; refresh(); });
+  $('#f-eff').addEventListener('change', e => { s.effective_on = e.target.value; refresh(); });
+  $('#f-dim').addEventListener('change', e => { s.dimension = e.target.value; s.value = ''; renderList(); });
+  $('#f-val').addEventListener('change', e => { s.value = e.target.value; refresh(); });
+  $('#f-ended').addEventListener('change', e => { s.include_ended = e.target.checked; refresh(); });
+  $$('[data-status]').forEach(b => b.addEventListener('click', () => {
+    const st = b.dataset.status;
+    s.statuses.has(st) ? s.statuses.delete(st) : s.statuses.add(st);
+    b.classList.toggle('on');
+    refresh();
+  }));
+  $('#f-clear').addEventListener('click', () => {
+    Object.assign(s, { q: '', merchant_id: '', fee_type: '', effective_on: '', dimension: '', value: '', include_ended: false, statuses: new Set(['DRAFT', 'PUBLISHED', 'RETIRED']) });
+    renderList();
+  });
+  await refreshList();
+}
+
+async function refreshList() {
+  const s = listState;
+  const p = new URLSearchParams();
+  if (s.q) p.set('q', s.q);
+  if (s.merchant_id) p.set('merchant_id', s.merchant_id);
+  if (s.fee_type) p.set('fee_type', s.fee_type);
+  if (s.effective_on) p.set('effective_on', `${s.effective_on}T12:00:00Z`);
+  if (s.dimension && s.value) { p.set('dimension', s.dimension); p.set('value', s.value); }
+  if (s.include_ended) p.set('include_ended', 'true');
+  s.statuses.forEach(st => p.append('status', st));
+  const holder = $('#rules-table');
+  if (!holder) return;
+  if (!s.statuses.size) { holder.innerHTML = '<div class="empty">Select at least one status.</div>'; $('#count').textContent = ''; return; }
+
+  let rows;
+  try { rows = await api('GET', `/billing/rules?${p}`); }
+  catch (err) { holder.innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
+  $('#count').textContent = `${rows.length} rule version${rows.length === 1 ? '' : 's'}`;
+  if (!rows.length) { holder.innerHTML = '<div class="empty">No rules match these filters.</div>'; return; }
+
+  holder.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Merchant</th><th>Fee</th><th>Conditions</th><th>Payer</th><th>Waived</th>
+        <th>Effective</th><th>Status</th><th style="text-align:right">Actions</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r => {
+          const ws = windowState(r);
+          return `<tr data-id="${r.rule_id}">
+            <td><strong>${esc(r.merchant_id)}</strong><div class="sub">${esc(r.merchant_name)}</div></td>
+            <td class="nowrap">${esc(r.fee_type_name)}<div class="sub mono">${shortId(r.logical_rule_id)} · rev ${r.revision}</div></td>
+            <td><div class="conds">${conditionChips(r.conditions)}</div></td>
+            <td>${payerText(r)}</td>
+            <td>${r.is_waived ? '<span class="badge waived">Waived</span>' : '<span class="muted">No</span>'}</td>
+            <td class="nowrap">${r.effective_from ? esc(fmtDate(r.effective_from)) : '<span class="faint">—</span>'}
+                <div class="sub">${r.effective_to ? `to ${esc(fmtDate(r.effective_to))}` : (r.effective_from ? 'open-ended' : '')}</div></td>
+            <td><span class="badge ${r.status}">${r.status[0] + r.status.slice(1).toLowerCase()}</span>
+                ${ws ? `<div style="margin-top:4px"><span class="badge ${ws.cls}">${ws.label}</span></div>` : ''}</td>
+            <td><div class="actions">
+              <button class="btn sm" data-act="view">${r.status === 'DRAFT' && can('EDITOR') ? 'Edit' : 'View'}</button>
+              ${can('EDITOR') ? '<button class="btn sm" data-act="dup" title="Duplicate as a new, independent rule">Duplicate</button>' : ''}
+              ${r.status === 'PUBLISHED' && can('PUBLISHER') ? '<button class="btn sm danger" data-act="retire">Retire</button>' : ''}
+              ${r.status !== 'DELETED' && can('ADMIN') ? '<button class="btn sm danger" data-act="delete">Delete</button>' : ''}
+            </div></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+
+  $$('tbody tr', holder).forEach(tr => tr.addEventListener('click', async e => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    const row = rows.find(r => r.rule_id === tr.dataset.id);
+    if (act === 'dup') return duplicateRule(row, true);
+    if (act === 'retire') return openRetire(row, refreshList);
+    if (act === 'delete') return openDelete(row, refreshList);
+    go(`#/rules/${row.rule_id}`);
+  }));
+}
+
+async function duplicateRule(rule, asNewRule) {
+  try {
+    const draft = await api('POST', `/billing/rules/${rule.rule_id}/clone`, { as_new_rule: asNewRule });
+    toast(asNewRule ? 'Duplicated as a new draft rule' : `Draft revision ${draft.revision} created`);
+    go(`#/rules/${draft.rule_id}`);
+  } catch (err) {
+    if (err.code === 'DRAFT_EXISTS') {
+      const existing = (await api('GET', `/billing/rules/${rule.rule_id}`)).revisions.find(r => r.status === 'DRAFT');
+      toast('This rule already has an open draft; opening it.', true);
+      if (existing) go(`#/rules/${existing.rule_id}`);
+    } else toast(err.message, true);
+  }
+}
+
+function openRetire(rule, after) {
+  modal({
+    title: 'Retire rule',
+    body: `
+      <p style="margin:0">Stops this rule applying from the chosen time. Its earlier window stays in the configuration
+      history and in Snowflake snapshots so late billing events and audits still resolve correctly.</p>
+      <div class="cond" style="align-self:flex-start">${esc(rule.merchant_id)} · ${esc(rule.fee_type_name)} · rev ${rule.revision}</div>
+      <label class="field"><span class="req">Retire from (UTC)</span><input type="datetime-local" id="ret-at" value="${toInput(new Date().toISOString())}"></label>
+      ${can('ADMIN') ? '' : '<div class="small muted">Retiring from a past time requires Admin.</div>'}
+      <label class="field"><span class="req">Reason</span><textarea id="ret-reason" placeholder="Why is this rule being retired?"></textarea></label>
+      <div id="ret-err"></div>`,
+    footer: '<button class="btn" data-close>Cancel</button><button class="btn danger" id="ret-go">Retire rule</button>',
+    onMount(el, close) {
+      $('#ret-go', el).addEventListener('click', async () => {
+        const reason = $('#ret-reason', el).value.trim();
+        if (!reason) { $('#ret-err', el).innerHTML = issueList([{ severity: 'error', code: 'REASON_REQUIRED', message: 'A reason is required.' }]); return; }
+        const at = $('#ret-at', el).value;
+        // "now" (to the minute) is sent as null so the server uses its own clock.
+        const effective_at = at && at !== toInput(new Date().toISOString()) ? fromInput(at) : null;
+        try {
+          await api('POST', `/billing/rules/${rule.rule_id}/retire`, { row_version: rule.row_version, effective_at, reason });
+          close();
+          toast('Rule retired');
+          after?.();
+        } catch (err) {
+          $('#ret-err', el).innerHTML = issueList([{ severity: 'error', code: err.code, message: err.message }]);
+        }
+      });
+    },
+  });
+}
+
+// ============================================================================
+// Rule editor (spec §8.2 – §8.4)
+// ============================================================================
+let ed = null;
+
+function formFromRule(rule) {
+  const scopes = {};
+  ref.dimensions.forEach(d => { scopes[d.dimension_key] = { mode: 'ALL', values: [] }; });
+  (rule?.conditions || []).forEach(c => { scopes[c.dimension] = { mode: 'SPECIFIC', values: [...c.values] }; });
+  return {
+    merchant_id: rule?.merchant_id || '',
+    fee_type: rule?.fee_type || '',
+    payer_type: rule?.payer_type || null,
+    payer_reference: rule?.payer_reference || null,
+    is_waived: rule?.is_waived ?? false,
+    effective_from: rule ? rule.effective_from : nextMidnightUtc(),
+    effective_to: rule?.effective_to || null,
+    change_reason: rule?.change_reason || '',
+    scopes,
+  };
+}
+
+function payloadFromForm(f) {
+  const conditions = Object.entries(f.scopes)
+    .filter(([, s]) => s.mode === 'SPECIFIC')
+    .map(([dimension, s]) => ({ dimension, operator: 'IN', values: s.values }));
+  return {
+    merchant_id: f.merchant_id,
+    fee_type: f.fee_type,
+    payer_type: f.payer_type,
+    payer_reference: f.payer_type === 'MERCHANT' ? null : f.payer_reference,
+    is_waived: f.is_waived,
+    effective_from: f.effective_from,
+    effective_to: f.effective_to,
+    change_reason: f.change_reason || null,
+    conditions,
+  };
+}
+
+const isDirty = () => ed && JSON.stringify(payloadFromForm(ed.form)) !== ed.initial;
+
+async function renderEditor(id) {
+  const rule = id ? await api('GET', `/billing/rules/${id}`) : null;
+  const form = formFromRule(rule);
+  ed = { rule, form, initial: JSON.stringify(payloadFromForm(form)), issues: null, busy: false };
+  leaveGuard = () => !ed.readonly && isDirty();
+  drawEditor();
+}
+
+function summaryText(f) {
+  const merchant = f.merchant_id ? `<strong>${esc(lookup.merchant(f.merchant_id))}</strong> (${esc(f.merchant_id)})` : '<span class="faint">[merchant]</span>';
+  const fee = f.fee_type ? `<strong>${esc(lookup.fee(f.fee_type).toLowerCase())}</strong>` : '<span class="faint">[fee]</span>';
+  let payer = '<span class="faint">[payer]</span>';
+  if (f.payer_type === 'MERCHANT') payer = 'the merchant';
+  if (f.payer_type === 'CARRIER') payer = f.payer_reference ? `carrier <strong>${esc(lookup.value('CARRIER', f.payer_reference))}</strong>` : 'the carrier on the fee/order';
+  if (f.payer_type === 'PARTNER') payer = f.payer_reference ? `partner <strong>${esc(lookup.partner(f.payer_reference))}</strong>` : '<span class="faint">[partner]</span>';
+  const decision = f.is_waived
+    ? `<strong>waive</strong> ${fee} (intended payer: ${payer})`
+    : `bill ${fee} to ${payer}`;
+
+  const specific = [], all = [];
+  ref.dimensions.forEach(d => {
+    const s = f.scopes[d.dimension_key];
+    if (s?.mode === 'SPECIFIC') {
+      const names = s.values.map(v => `<strong>${esc(lookup.value(d.dimension_key, v))}</strong>`);
+      specific.push(`${esc(d.display_name.toLowerCase())} is ${names.length ? joinOr(names) : '<span class="faint">[choose values]</span>'}`);
+    } else if (d.is_active || s?.mode === 'SPECIFIC') {
+      all.push(d.display_name.toLowerCase());
+    }
+  });
+  const where = specific.length ? `on orders where ${specific.join(' and ')}` : 'on <strong>all</strong> orders';
+  const regardless = specific.length && all.length ? `, regardless of ${joinOr(all)}` : '';
+  const from = f.effective_from ? fmtDate(f.effective_from, { utc: true, time: true }) : '[start]';
+  const to = f.effective_to ? `until ${fmtDate(f.effective_to, { utc: true, time: true })}` : 'with no end date';
+  return `For merchant ${merchant}, ${decision} ${where}${regardless}. Effective from ${esc(from)} ${esc(to)}.`;
+}
+
+function issueList(issues) {
+  if (!issues.length) return '';
+  const icon = { error: '✕', warning: '!', info: 'i' };
+  return `<div class="issues">${issues.map(i => `
+    <div class="issue ${i.severity}">
+      <span class="ico">${icon[i.severity]}</span>
+      <div>${esc(i.message)}
+        ${i.related_rule_id ? ` <a href="#/rules/${esc(i.related_rule_id)}" target="_blank" rel="noopener">Open rule ↗</a>` : ''}
+        ${i.code ? `<div><code>${esc(i.code)}</code></div>` : ''}
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function issuesPanel() {
+  if (ed.issues === null) {
+    return `<div class="muted small">${ed.rule?.status === 'DRAFT' || !ed.rule ? 'Run <strong>Validate</strong> to check structure, reference values, effective dates and conflicts before publishing.' : 'Published rules were validated at publish time.'}</div>`;
+  }
+  const order = { error: 0, warning: 1, info: 2 };
+  const issues = [...ed.issues].sort((a, b) => order[a.severity] - order[b.severity]);
+  const n = sev => issues.filter(i => i.severity === sev).length;
+  if (!issues.length) return '<div class="issue info"><span class="ico">✓</span><div>No issues found. Ready to publish.</div></div>';
+  return `<div class="issue-head">
+      ${n('error') ? `<span class="e">${n('error')} blocking error${n('error') > 1 ? 's' : ''}</span>` : '<span class="i">No blocking errors</span>'}
+      ${n('warning') ? `<span class="w">${n('warning')} warning${n('warning') > 1 ? 's' : ''}</span>` : ''}
+      ${n('info') ? `<span class="muted">${n('info')} note${n('info') > 1 ? 's' : ''}</span>` : ''}
+    </div>${issueList(issues)}`;
+}
+
+function drawEditor() {
+  const { rule, form: f } = ed;
+  const isNew = !rule;
+  const readonly = isNew ? !can('EDITOR') : rule.status !== 'DRAFT' || !can('EDITOR');
+  ed.readonly = readonly;
+  const status = rule?.status || 'DRAFT';
+  const fieldIssues = {};
+  (ed.issues || []).forEach(i => { if (i.field && i.severity !== 'info') (fieldIssues[i.field] ||= []).push(i.severity); });
+  const mark = field => (fieldIssues[field]?.includes('error') ? 'has-error' : fieldIssues[field]?.includes('warning') ? 'has-warning' : '');
+
+  const visibleDims = ref.dimensions.filter(d => d.is_active || f.scopes[d.dimension_key]?.mode === 'SPECIFIC');
+
+  app.innerHTML = `
+    <div class="page-head">
+      <div>
+        <a href="#/rules" id="back" class="small">← All rules</a>
+        <h1 style="margin-top:6px">${isNew ? 'New billing rule' : `${esc(rule.merchant_id)} · ${esc(rule.fee_type_name)}`}</h1>
+        <div class="head-meta">
+          <span class="badge ${status}">${status[0] + status.slice(1).toLowerCase()}</span>
+          ${rule ? `<span class="mono" title="logical_rule_id">${esc(rule.logical_rule_id)}</span><span>· rev ${rule.revision}</span>` : ''}
+          ${rule && windowState(rule) ? `<span class="badge ${windowState(rule).cls}">${windowState(rule).label}</span>` : ''}
+          <span class="dirty-dot" id="dirty" ${isDirty() ? '' : 'hidden'}>● Unsaved changes</span>
+        </div>
+      </div>
+      <div class="row">
+        ${rule ? '<button class="btn" id="btn-history">View change history</button>' : ''}
+        ${rule && rule.status !== 'DELETED' && can('ADMIN') ? `<button class="btn danger" id="btn-delete">${rule.status === 'DRAFT' ? 'Delete draft' : 'Delete rule'}</button>` : ''}
+        ${!readonly ? `
+          <button class="btn" id="btn-save">Save draft</button>
+          <button class="btn" id="btn-validate">Validate</button>
+          ${can('PUBLISHER') ? '<button class="btn primary" id="btn-publish">Publish</button>' : ''}` : ''}
+      </div>
+    </div>
+
+    ${rule && rule.status === 'DELETED' ? `
+      <div class="readonly-banner deleted">
+        <span>Deleted by ${esc(rule.deleted_by)} on ${esc(fmtDate(rule.deleted_at, { time: true, utc: true }))}. Deleted rules never sync to Snowflake or take part in matching; they are kept for audit.</span>
+        ${can('EDITOR') ? '<span class="row"><button class="btn sm" id="btn-dup">Duplicate as new rule</button></span>' : ''}
+      </div>` : ''}
+    ${rule && (rule.status === 'PUBLISHED' || rule.status === 'RETIRED') ? `
+      <div class="readonly-banner">
+        <span>${rule.status === 'PUBLISHED' ? 'Published rules are immutable. To change it, duplicate it as a new revision with a future effective date.' : 'This revision is retired. Its historical window is kept for audit and late billing events.'}</span>
+        <span class="row">
+          ${can('EDITOR') ? `<button class="btn sm" id="btn-revision">Duplicate as new revision</button><button class="btn sm" id="btn-dup">Duplicate as new rule</button>` : ''}
+          ${rule.status === 'PUBLISHED' && can('PUBLISHER') ? '<button class="btn sm danger" id="btn-retire">Retire</button>' : ''}
+        </span>
+      </div>` : ''}
+    ${rule && rule.status === 'DRAFT' && !can('EDITOR') ? '<div class="readonly-banner"><span>You have view-only access. Switch to Editor to change drafts.</span></div>' : ''}
+
+    <div class="editor">
+      <div class="editor-form">
+        <section class="card">
+          <header><h2><span class="section-letter">A</span>Rule identity</h2></header>
+          <div class="body grid2">
+            <div class="field-wrap ${mark('merchant_id')}"><label class="field"><span class="req">Merchant</span></label><div id="sel-merchant"></div></div>
+            <div class="field-wrap ${mark('fee_type')}"><label class="field"><span class="req">Fee type</span></label><div id="sel-fee"></div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <header>
+            <h2><span class="section-letter">B</span>Applies when</h2>
+            <span class="small muted">OR within a dimension · AND across dimensions</span>
+          </header>
+          <div class="body">
+            ${visibleDims.map(d => {
+              const s = f.scopes[d.dimension_key];
+              return `<div class="dim-row ${mark(`conditions.${d.dimension_key}`)}" data-dim="${d.dimension_key}">
+                <div class="dim-name">${esc(d.display_name)}
+                  <span class="small faint">${esc(d.value_source)}</span>
+                  ${!d.is_available_in_staging ? '<span class="tag warn" title="Not yet present in Snowflake match_context; rules using it cannot be published">Not in staging</span>' : ''}
+                  ${!d.is_active ? '<span class="tag">Inactive</span>' : ''}
+                </div>
+                <div class="seg" role="group" aria-label="${esc(d.display_name)} scope">
+                  <button type="button" data-scope="ALL" class="${s.mode === 'ALL' ? 'on' : ''}" ${readonly ? 'disabled' : ''}>All</button>
+                  <button type="button" data-scope="SPECIFIC" class="${s.mode === 'SPECIFIC' ? 'on' : ''}" ${readonly ? 'disabled' : ''}>Specific</button>
+                </div>
+                <div class="dim-values">${s.mode === 'ALL' ? `<div class="all-note">Applies to all ${esc(d.display_name.toLowerCase())} values</div>` : ''}</div>
+              </div>`;
+            }).join('')}
+            <div class="policy-note">
+              Rules for the same merchant and fee type cannot specify the same value twice (e.g. Destination CA, AU
+              and Destination AU, GB conflict on AU). A rule that adds dimensions on top of another is an
+              <strong>exception</strong> and wins where both match (e.g. "Destination CA" over a rule with no conditions).
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <header><h2><span class="section-letter">C</span>Billing decision</h2></header>
+          <div class="body" style="display:flex;flex-direction:column;gap:16px">
+            <div class="grid2">
+              <div class="${mark('payer_type')}">
+                <label class="field"><span class="req">Payer type</span></label>
+                <div class="seg" id="payer-type" style="margin-top:4px">
+                  ${['MERCHANT', 'CARRIER', 'PARTNER'].map(p => `<button type="button" data-payer="${p}" class="${f.payer_type === p ? 'on' : ''}" ${readonly ? 'disabled' : ''}>${p[0] + p.slice(1).toLowerCase()}</button>`).join('')}
+                </div>
+              </div>
+              <div class="${mark('payer_reference')}">
+                ${f.payer_type === 'PARTNER' ? '<label class="field"><span class="req">Partner</span></label><div id="sel-payer-ref"></div>' : ''}
+                ${f.payer_type === 'CARRIER' ? '<label class="field">Payer carrier <span class="faint">(optional — default is the carrier on the fee/order)</span></label><div id="sel-payer-ref"></div>' : ''}
+                ${f.payer_type === 'MERCHANT' ? '<label class="field">Payer entity</label><div class="muted small" style="padding-top:8px">Resolved to the merchant on the order.</div>' : ''}
+              </div>
+            </div>
+            <label class="switch"><input type="checkbox" id="waived" ${f.is_waived ? 'checked' : ''} ${readonly ? 'disabled' : ''}>
+              <span><strong>Waive fee</strong> <span class="muted small">— invoice amount 0; the original OMS fee and intended payer are kept for audit</span></span></label>
+            <div class="grid2">
+              <label class="field ${mark('effective_from')}"><span class="req">Effective start (UTC, inclusive)</span>
+                <input type="datetime-local" id="eff-from" value="${toInput(f.effective_from)}" ${readonly ? 'disabled' : ''}></label>
+              <label class="field ${mark('effective_to')}">Effective end (UTC, exclusive)
+                <input type="datetime-local" id="eff-to" value="${toInput(f.effective_to)}" ${readonly ? 'disabled' : ''}></label>
+            </div>
+            <label class="field">Change reason
+              <textarea id="reason" placeholder="Why is this rule being created or changed?" ${readonly ? 'disabled' : ''}>${esc(f.change_reason)}</textarea></label>
+          </div>
+        </section>
+      </div>
+
+      <aside class="side">
+        <section class="card">
+          <header><h3>Summary</h3></header>
+          <div class="body summary" id="summary">${summaryText(f)}</div>
+        </section>
+        <section class="card">
+          <header><h3>Validation</h3>${!readonly ? '<button class="btn sm" id="btn-validate-2">Validate</button>' : ''}</header>
+          <div class="body" id="issues">${issuesPanel()}</div>
+        </section>
+        ${rule ? `
+        <section class="card">
+          <header><h3>Revisions</h3></header>
+          <div class="body revs">
+            ${rule.revisions.map(r => `
+              <div class="rev ${r.rule_id === rule.rule_id ? 'current' : ''}">
+                <span class="mono">rev ${r.revision}</span>
+                <span>${r.effective_from ? esc(fmtDate(r.effective_from)) : '—'} → ${r.effective_to ? esc(fmtDate(r.effective_to)) : 'open'}
+                  ${r.rule_id === rule.rule_id ? '' : ` · <a href="#/rules/${r.rule_id}">open</a>`}</span>
+                <span class="badge ${r.status}">${r.status[0] + r.status.slice(1).toLowerCase()}</span>
+              </div>`).join('')}
+          </div>
+        </section>` : ''}
+      </aside>
+    </div>`;
+
+  mountEditorControls(readonly);
+}
+
+function mountEditorControls(readonly) {
+  const f = ed.form;
+  const changed = () => { $('#summary').innerHTML = summaryText(f); $('#dirty').hidden = !isDirty(); };
+
+  $('#sel-merchant').appendChild(createSelect({
+    options: ref.merchants.map(m => ({ value: m.merchant_id, label: `${m.merchant_id} · ${m.display_name}`, hidden: !m.is_active })),
+    selected: f.merchant_id ? [f.merchant_id] : [], multi: false, disabled: readonly, placeholder: 'Search merchants…',
+    onChange: v => { f.merchant_id = v; changed(); },
+  }));
+  $('#sel-fee').appendChild(createSelect({
+    options: ref.feeTypes.map(t => ({ value: t.fee_type, label: t.display_name, hidden: !t.is_active })),
+    selected: f.fee_type ? [f.fee_type] : [], multi: false, disabled: readonly, placeholder: 'Search fee types…',
+    onChange: v => { f.fee_type = v; changed(); },
+  }));
+
+  $$('.dim-row').forEach(row => {
+    const key = row.dataset.dim;
+    const s = f.scopes[key];
+    $$('[data-scope]', row).forEach(b => b.addEventListener('click', () => {
+      if (s.mode === b.dataset.scope) return;
+      s.mode = b.dataset.scope;
+      if (s.mode === 'ALL') s.values = [];
+      drawEditor();
+      if (s.mode === 'SPECIFIC') $(`.dim-row[data-dim="${key}"] .ms input`)?.focus();
+    }));
+    if (s.mode === 'SPECIFIC') {
+      const holder = $('.dim-values', row);
+      holder.appendChild(createSelect({
+        options: (ref.values[key] || []).map(v => ({ value: v.value, label: v.display_name, hidden: !v.is_active })),
+        selected: s.values, disabled: readonly, placeholder: `Search ${lookup.dimName(key).toLowerCase()}…`,
+        onChange: vals => { s.values = vals; changed(); },
+      }));
+      if (!readonly && !s.values.length) {
+        holder.insertAdjacentHTML('beforeend', '<div class="small" style="color:var(--err);margin-top:4px">Select at least one value, or switch to All.</div>');
+      }
+    }
+  });
+
+  $$('[data-payer]').forEach(b => b.addEventListener('click', () => {
+    if (f.payer_type === b.dataset.payer) return;
+    f.payer_type = b.dataset.payer;
+    f.payer_reference = null;
+    drawEditor();
+  }));
+  const payerRef = $('#sel-payer-ref');
+  if (payerRef) {
+    const options = f.payer_type === 'PARTNER'
+      ? ref.partners.map(p => ({ value: p.partner_id, label: p.display_name, hidden: !p.is_active }))
+      : (ref.values.CARRIER || []).map(v => ({ value: v.value, label: v.display_name, hidden: !v.is_active }));
+    payerRef.appendChild(createSelect({
+      options, selected: f.payer_reference ? [f.payer_reference] : [], multi: false, disabled: readonly,
+      placeholder: f.payer_type === 'PARTNER' ? 'Search partners…' : 'Carrier on the fee/order',
+      onChange: v => { f.payer_reference = v; changed(); },
+    }));
+    if (f.payer_type === 'CARRIER' && f.payer_reference && !readonly) {
+      payerRef.insertAdjacentHTML('beforeend', '<button class="btn sm ghost" id="clear-payer-ref" style="margin-top:4px">Use carrier on the fee/order</button>');
+      $('#clear-payer-ref').addEventListener('click', () => { f.payer_reference = null; drawEditor(); });
+    }
+  }
+
+  $('#waived').addEventListener('change', e => { f.is_waived = e.target.checked; changed(); });
+  $('#eff-from').addEventListener('change', e => { f.effective_from = fromInput(e.target.value); changed(); });
+  $('#eff-to').addEventListener('change', e => { f.effective_to = fromInput(e.target.value); changed(); });
+  $('#reason').addEventListener('input', e => { f.change_reason = e.target.value; changed(); });
+
+  $('#back').addEventListener('click', e => { e.preventDefault(); go('#/rules'); });
+  $('#btn-history')?.addEventListener('click', openHistory);
+  $('#btn-save')?.addEventListener('click', () => withBusy(async () => { await saveDraft(); toast('Draft saved'); }));
+  $('#btn-validate')?.addEventListener('click', () => withBusy(runValidate));
+  $('#btn-validate-2')?.addEventListener('click', () => withBusy(runValidate));
+  $('#btn-publish')?.addEventListener('click', () => withBusy(runPublish));
+  $('#btn-delete')?.addEventListener('click', () => openDelete(ed.rule, () => { leaveGuard = null; route(); }));
+  $('#btn-revision')?.addEventListener('click', () => duplicateRule(ed.rule, false));
+  $('#btn-dup')?.addEventListener('click', () => duplicateRule(ed.rule, true));
+  $('#btn-retire')?.addEventListener('click', () => openRetire(ed.rule, route));
+}
+
+async function withBusy(fn) {
+  if (ed.busy) return;
+  ed.busy = true;
+  const buttons = $$('.page-head button, #btn-validate-2');
+  buttons.forEach(b => { b.disabled = true; });
+  try { await fn(); }
+  catch (err) {
+    if (err.issues?.length) { ed.issues = err.issues; drawEditor(); }
+    toast(err.message, true);
+  } finally {
+    ed.busy = false;
+    $$('.page-head button, #btn-validate-2').forEach(b => { b.disabled = false; });
+  }
+}
+
+function clientCheck() {
+  const f = ed.form;
+  const issues = [];
+  if (!f.merchant_id) issues.push({ severity: 'error', code: 'REQUIRED', message: 'Choose a merchant before saving.', field: 'merchant_id' });
+  if (!f.fee_type) issues.push({ severity: 'error', code: 'REQUIRED', message: 'Choose a fee type before saving.', field: 'fee_type' });
+  Object.entries(f.scopes).forEach(([k, s]) => {
+    if (s.mode === 'SPECIFIC' && !s.values.length) {
+      issues.push({ severity: 'error', code: 'EMPTY_DIMENSION', message: `Specific ${lookup.dimName(k)} selected without any value.`, field: `conditions.${k}` });
+    }
+  });
+  return issues;
+}
+
+/** Persist the form. Returns the saved rule (creating it if new). */
+async function saveDraft() {
+  const local = clientCheck();
+  if (local.length) {
+    ed.issues = local;
+    drawEditor();
+    throw Object.assign(new Error('Fix the highlighted fields before saving.'), { issues: local });
+  }
+  const payload = payloadFromForm(ed.form);
+  let saved;
+  if (!ed.rule) {
+    saved = await api('POST', '/billing/rules', payload);
+  } else if (isDirty()) {
+    saved = await api('PATCH', `/billing/rules/${ed.rule.rule_id}`, { row_version: ed.rule.row_version, ...payload });
+  } else {
+    return ed.rule;
+  }
+  const full = await api('GET', `/billing/rules/${saved.rule_id}`);
+  const wasNew = !ed.rule;
+  ed.rule = full;
+  ed.form = formFromRule(full);
+  ed.initial = JSON.stringify(payloadFromForm(ed.form));
+  ed.issues = null;
+  if (wasNew) history.replaceState(null, '', `#/rules/${full.rule_id}`);
+  drawEditor();
+  return full;
+}
+
+async function runValidate() {
+  const rule = await saveDraft();
+  const res = await api('POST', `/billing/rules/${rule.rule_id}/validate`);
+  ed.issues = res.issues;
+  drawEditor();
+  return res;
+}
+
+async function runPublish() {
+  const res = await runValidate();
+  if (!res.ok) { toast('Resolve blocking errors before publishing.', true); return; }
+  const warnings = res.issues.filter(i => i.severity === 'warning');
+  const notes = res.issues.filter(i => i.severity === 'info' && i.code !== 'CATCH_ALL');
+  const ok = await confirmDialog({
+    title: 'Publish rule?',
+    message: `<p style="margin:0">Once published, this rule becomes eligible for the next Snowflake configuration snapshot and its business fields can no longer be edited.</p>
+      <div class="summary" style="padding:10px 12px;background:var(--surface-2);border-radius:6px">${summaryText(ed.form)}</div>
+      ${warnings.length || notes.length ? issueList([...warnings, ...notes]) : ''}`,
+    confirmLabel: warnings.length ? 'Publish with warnings' : 'Publish',
+  });
+  if (!ok) return;
+  const published = await api('POST', `/billing/rules/${ed.rule.rule_id}/publish`, { row_version: ed.rule.row_version, reason: ed.form.change_reason || null });
+  toast('Rule published');
+  leaveGuard = null;
+  await renderEditor(published.rule_id);
+}
+
+function openDelete(rule, after) {
+  modal({
+    title: rule.status === 'DRAFT' ? 'Delete draft' : 'Delete rule',
+    body: '<div class="empty"><span class="spinner"></span></div>',
+    footer: '<button class="btn" data-close>Cancel</button><button class="btn danger" id="del-go" disabled>Delete</button>',
+    async onMount(el, close) {
+      let detail;
+      try { detail = await api('GET', `/billing/rules/${rule.rule_id}`); }
+      catch (err) { $('.body', el).innerHTML = issueList([{ severity: 'error', code: err.code, message: err.message }]); return; }
+      const isDraft = detail.status === 'DRAFT';
+      const versions = isDraft ? [detail] : detail.revisions.filter(r => r.status !== 'DELETED');
+      $('.body', el).innerHTML = `
+        <div class="cond" style="align-self:flex-start">${esc(detail.merchant_id)} · ${esc(detail.fee_type_name)} · <span class="mono">${shortId(detail.logical_rule_id)}</span></div>
+        <p style="margin:0">${isDraft
+          ? 'Deletes this draft only. Published versions of the rule are not affected.'
+          : `Deletes <strong>all ${versions.length} version${versions.length > 1 ? 's' : ''}</strong> of this rule:`}</p>
+        ${isDraft ? '' : `<div class="revs">${versions.map(r => `
+          <div class="rev"><span class="mono">rev ${r.revision}</span>
+            <span>${r.effective_from ? esc(fmtDate(r.effective_from)) : '—'} → ${r.effective_to ? esc(fmtDate(r.effective_to)) : 'open'}</span>
+            <span class="badge ${r.status}">${r.status[0] + r.status.slice(1).toLowerCase()}</span></div>`).join('')}</div>
+          <div class="issue warning"><span class="ico">!</span><div>From the next configuration sync, billing stops using this rule
+            for <strong>all dates</strong>, including past fee lines that are not yet finalized. Finalized invoices are not changed.
+            Use <strong>Retire</strong> instead to stop the rule from a date and keep its history in effect.</div></div>`}
+        <div class="small muted">The rule and its change history stay available under the <strong>Deleted</strong> status filter.</div>
+        <label class="field"><span class="req">Reason</span><textarea id="del-reason" placeholder="Why is this rule being deleted?"></textarea></label>
+        <div id="del-err"></div>`;
+      const delBtn = $('#del-go', el);
+      delBtn.disabled = false;
+      delBtn.textContent = isDraft ? 'Delete draft' : `Delete ${versions.length} version${versions.length > 1 ? 's' : ''}`;
+      delBtn.addEventListener('click', async () => {
+        const reason = $('#del-reason', el).value.trim();
+        if (!reason) { $('#del-err', el).innerHTML = issueList([{ severity: 'error', code: 'REASON_REQUIRED', message: 'A reason is required.' }]); return; }
+        try {
+          await api('DELETE', `/billing/rules/${detail.rule_id}`, { row_version: detail.row_version, reason });
+          close();
+          toast(isDraft ? 'Draft deleted' : 'Rule deleted');
+          after?.();
+        } catch (err) {
+          $('#del-err', el).innerHTML = issueList([{ severity: 'error', code: err.code, message: err.message }]);
+        }
+      });
+    },
+  });
+}
+
+// ============================================================================
+// Change history (spec §6.4, §8.3 "View Change History")
+// ============================================================================
+function fmtVal(key, v) {
+  if (v === null || v === undefined || v === '') return '—';
+  if (key === 'conditions') return v.length ? v.map(c => `${SHORT_DIM[c.dimension] || c.dimension}: ${c.values.join('/')}`).join('; ') : 'All orders';
+  if (key.startsWith('effective')) return fmtDate(v, { utc: true });
+  return String(v);
+}
+
+function diffRows(prev, next) {
+  if (!next) return '';
+  const keys = ['status', 'merchant_id', 'fee_type', 'payer_type', 'payer_reference', 'is_waived', 'effective_from', 'effective_to', 'conditions'];
+  const rows = keys.filter(k => JSON.stringify(prev?.[k] ?? null) !== JSON.stringify(next[k] ?? null)).map(k => {
+    const before = prev ? `<del>${esc(fmtVal(k, prev[k]))}</del> → ` : '';
+    return `<span class="k">${k}</span><span>${before}<ins>${esc(fmtVal(k, next[k]))}</ins></span>`;
+  });
+  return rows.length ? `<div class="diff">${rows.join('')}</div>` : '';
+}
+
+async function openHistory() {
+  const events = await api('GET', `/billing/rules/${ed.rule.rule_id}/history`);
+  modal({
+    title: 'Change history', wide: true,
+    body: `<div class="small muted">All revisions of logical rule <span class="mono">${esc(ed.rule.logical_rule_id)}</span>. Audit records are append-only.</div>
+      <div class="timeline">${events.map(e => `
+        <div class="event">
+          <div class="when">${esc(fmtDate(e.occurred_at, { time: true }))}<br><span class="mono">${e.revision ? `rev ${e.revision}` : '—'}</span></div>
+          <div>
+            <div class="row" style="gap:8px"><span class="action ${e.action}">${e.action}</span><span class="small">${esc(e.actor)}</span></div>
+            ${e.reason ? `<div style="margin-top:4px">${esc(e.reason)}</div>` : ''}
+            ${e.action === 'REJECTED' && e.new_value?.issues ? `<div style="margin-top:6px">${issueList(e.new_value.issues)}</div>` : diffRows(e.previous_value, e.new_value)}
+          </div>
+        </div>`).join('') || '<div class="empty">No history.</div>'}</div>`,
+  });
+}
+
+// ============================================================================
+// Boot
+// ============================================================================
+(async function boot() {
+  const userInput = $('#who-user');
+  const roleSelect = $('#who-role');
+  userInput.value = session.user;
+  roleSelect.value = session.role;
+  userInput.addEventListener('change', () => { session.user = userInput.value.trim() || 'demo.user@openborder.com'; store.set('bc.user', session.user); go(location.hash || '#/rules'); });
+  roleSelect.addEventListener('change', () => { session.role = roleSelect.value; store.set('bc.role', session.role); go(location.hash || '#/rules'); });
+  try {
+    await loadRef();
+  } catch (err) {
+    app.innerHTML = `<div class="card"><div class="empty">Could not reach the billing configuration API: ${esc(err.message)}</div></div>`;
+    return;
+  }
+  route();
+})();
+</script>
+</body>
+</html>
